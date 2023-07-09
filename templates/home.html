@@ -8,22 +8,9 @@
   <style type="text/css">@font-face{font-family:Gilroy;font-style:normal;font-weight:100 400;src:url(https://pouch-global-font-assets.s3.eu-central-1.amazonaws.com/Gilroy-Medium.otf)}@font-face{font-family:Gilroy;font-style:normal;font-weight:500 900;src:url(https://pouch-global-font-assets.s3.eu-central-1.amazonaws.com/Gilroy-Bold.otf)}@font-face{font-family:"Font Awesome 5 Free";font-style:normal;font-weight:900;src:url(https://use.fontawesome.com/releases/v5.6.3/webfonts/fa-solid-900.woff2) format("woff2")}@font-face{font-family:"Font Awesome 5 Brands";font-style:normal;font-weight:normal;src:url(https://use.fontawesome.com/releases/v5.6.3/webfonts/fa-brands-400.woff2) format("woff2")}
 </style></head>
   <body>
-    <section>
-      <div class="form-box">
-        <div class="form-value">
-          <form action="https://eu.pythonanywhere.com/users/create" method="post">
-            <h2>Enter username and password</h2>
-            <div class="inputbox">
-              <ion-icon name="person-outline" role="img" class="md hydrated" aria-label="person outline"><template shadowrootmode="open"><div class="icon-inner"><svg xmlns="http://www.w3.org/2000/svg" class="ionicon s-ion-icon" viewBox="0 0 512 512"><title>Person</title><path d="M344 144c-3.92 52.87-44 96-88 96s-84.15-43.12-88-96c-4-55 35-96 88-96s92 42 88 96z" stroke-linecap="round" stroke-linejoin="round" class="ionicon-fill-none ionicon-stroke-width"></path><path d="M256 304c-87 0-175.3 48-191.64 138.6C62.39 453.52 68.57 464 80 464h352c11.44 0 17.62-10.48 15.65-21.4C431.3 352 343 304 256 304z" stroke-miterlimit="10" class="ionicon-fill-none ionicon-stroke-width"></path></svg></div></template></ion-icon>
-              <input name="username" min="1" max="150" required="">
-              <input name="password" min="1" max="150" required="">
-              <label for="">Age</label>
-            </div>
-            <button>Submit</button>
-          </form>
-        </div>
-      </div>
-    </section>
+      <a href="{{ url_for('logout') }}">Logout</a>
+      <p>{{  username  }}</p>
+    </body>
+
     <script type="module" src="./home_files/ionicons.esm.js.download"></script>
     <script nomodule="" src="./home_files/ionicons.js.download"></script>
-  

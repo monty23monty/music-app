@@ -29,27 +29,37 @@ def home():
     if 'logged_in' in session and session['logged_in']:
         # User is logged in
         username = session['username']
+        return render_template("home.html", username=username)
         # ... your code for logged-in users
     else:
-        redirect(url_for("login"))
+        return redirect(url_for("login"))
+
 
 @app.route("/users/create", methods=["GET", "POST"])
 def user_create():
     if request.method == "POST":
-        password=request.form["password"].encode('utf-8')
-        password = sha256(password).hexdigest()
-        user = User(
-            username=request.form["username"],
-            email=request.form["email"],
-            password=password
-        )
-        with open("output.txt", "wb") as f:
-            f.write(request.form["username"].encode('utf-8'))
-            f.write(request.form["email"].encode('utf-8'))
-            f.write(request.form["password"].encode('utf-8'))
-        db.session.add(user)
-        db.session.commit()
-        return redirect(url_for("login"))
+        if request.method == 'POST':
+            username = request.form['username']
+            email = request.form['email']
+            password = request.form['password']
+
+            existing_user = User.query.filter(db.or_(User.username == username, User.email == email)).first()
+
+            if existing_user:
+                if existing_user.username == username:
+                    flash('Username already exists.')
+                if existing_user.email == email:
+                    flash('Email already exists.')
+
+                return redirect(url_for("auth"))
+            else:
+                # Create a new user
+                hashed_password = hashlib.sha256(password.encode()).hexdigest()
+                new_user = User(username=username, email=email, password=hashed_password)
+                db.session.add(new_user)
+                db.session.commit()
+                flash('User successfully registered!')
+                return redirect(url_for("login"))
 
     return render_template("user/create.html")
 
@@ -85,6 +95,12 @@ def login():
             flash('Username not found!')
 
     return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    session.clear()  # Clear the user session data
+    flash('You have been logged out successfully.')
+    return redirect(url_for('login'))
 
 
 if __name__ == '__main__':

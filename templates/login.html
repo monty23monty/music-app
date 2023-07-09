@@ -14,6 +14,7 @@
 
 
             <form method="POST" action="/login">
+                <h1>Login</h1>
                 {% with messages = get_flashed_messages() %}
                 {% if messages %}
                     <ul class="flashes">
@@ -22,8 +23,8 @@
                         {% endfor %}
                     </ul>
                 {% endif %}
-                {% endwith %}
-                <h1>Login</h1>
+            {% endwith %}
+                
                 <div class="inputbox">
                     <input type="text" id="username" name="username" required="">
                     <label for="username">Username:</label>
@@ -33,10 +34,9 @@
                     <label for="password">Password:</label>
                 </div>
                 <button>Submit</button>
-                <a href="http://127.0.0.1:5000/users">Don't have an account? Click Here</a>
+                <a href="http://musicapp-19roberl.eu.pythonanywhere.com/users">Don't have an account? Click Here</a>
                 
             </form>
         </div>
     </section>
-
 
