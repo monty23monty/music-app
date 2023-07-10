@@ -1,32 +1,63 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
+    <head>
+        <!-- ... -->
+    </head>
+    <body>
+        <!-- ... -->
+        <h2>{{ room.name }}</h2>
+        <p>Room Code: {{ room.code }}</p>
+        <h3>Connected Users:</h3>
 
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='css/index.css') }}"
-    />
-  <title>Room Detail</title>
-</head>
+<ul id="userList"></ul>
 
-<body>
-  <section>
-    <div class="form-box">
-      <h1>{{ room.name }}</h1>
-      <p>Room Code: {{ room.code }}</p>
 
-      <h2>Connected Users:</h2>
-      <ul>
-        {% for user in room.connected_users %}
-          <li>{{ user.username }}</li>
-        {% endfor %}
-      </ul>
-    </div>
-  </section>
+<form action="/leave" method="post">
+    <input type="hidden" name="room_id" value="{{ room.id }}">
+    <input type="submit" value="Leave Room">
+</form>
 
-  <script src="script.js"></script>
+<script src="https://cdn.socket.io/4.4.1/socket.io.js"></script>
+<script>
+    var socket = io()
+    // Event handler for successful connection
+    socket.on('connect', function() {
+        console.log('Connected to server.');
+    });
+
+        // Join a room
+        console.log('Joining room:', '{{ room.id }}');  // Add this line for debugging
+        socket.emit('join_room', {
+            room_id: '{{ room.id }}'  // Room ID is obtained from the server-side Flask variable
+        });
+        
+    // Event handler for disconnection
+    socket.on('disconnect', function() {
+        console.log('Disconnected from server.');
+    });
+
+    // Event handler for updates to the list of connected users
+    socket.on('connected_users_update', function(data) {
+        console.log('Received connected_users_update event:', data);  // Added for debugging
+    
+        console.log('Updated list of connected users:', data.users);
+    
+        // Update the user list in the HTML
+        var userList = document.getElementById('userList');
+        userList.innerHTML = '';
+        for (var i = 0; i < data.users.length; i++) {
+            console.log('Adding user to list:', data.users[i]);  // Added for debugging
+            var li = document.createElement('li');
+            li.textContent = data.users[i];
+            userList.appendChild(li);
+        }
+    });
+
+    // Event handler for errors
+    socket.on('error', function(data) {
+        console.log('Error:', data.message);
+    });
+</script>
+
 </body>
-
 </html>

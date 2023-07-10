@@ -13,6 +13,49 @@
   <body>
       <a href="{{ url_for('logout') }}">Logout</a>
       <p>{{  username  }}</p>
+
+   <!-- ... -->
+    <h1>Rooms</h1>
+    <form method="POST" action="/join">
+      <input type="number" name="room_id" min="1" required/>
+      <label for="">Room ID</label>
+    <button type="submit"/>
+  </form>
+    <!-- ... -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.min.js"></script>
+    <script>
+        var socket = io();
+
+        // Event handler for successful connection
+        socket.on('connect', function() {
+            console.log('Connected to server.');
+        });
+
+        // Event handler for disconnection
+        socket.on('disconnect', function() {
+            console.log('Disconnected from server.');
+        });
+
+        // Event handler for errors
+        socket.on('error', function(data) {
+            console.log('Error:', data.message);
+        });
+
+        // Function to join a room
+        function joinRoom(roomId) {
+            socket.emit('join_room', { room_id: roomId });
+        }
+
+        // Add click event listeners to the room buttons
+        var roomButtons = document.getElementsByClassName('roomButton');
+        for (var i = 0; i < roomButtons.length; i++) {
+            roomButtons[i].addEventListener('click', function() {
+                var roomId = this.getAttribute('data-room-id');
+                joinRoom(roomId);
+            });
+        }
+    </script>
+
     </body>
 
     <script type="module" src="./home_files/ionicons.esm.js.download"></script>
