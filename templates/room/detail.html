@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/index.css') }}"
+    />
+  <title>Room Detail</title>
+</head>
+
+<body>
+  <section>
+    <div class="form-box">
+      <h1>{{ room.name }}</h1>
+      <p>Room Code: {{ room.code }}</p>
+
+      <h2>Connected Users:</h2>
+      <ul>
+        {% for user in room.connected_users %}
+          <li>{{ user.username }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </section>
+
+  <script src="script.js"></script>
+</body>
+
+</html>
