@@ -4,22 +4,16 @@ from hashlib import sha256
 from flask_sqlalchemy import SQLAlchemy
 import random
 import string
+from flask_socketio import SocketIO, emit
 import eventlet
-import eventlet.wsgi
-from flask_socketio import SocketIO, emit, join_room, leave_room, send
-from flask_migrate import Migrate
-
-
 
 
 db = SQLAlchemy()
 app = Flask(__name__)
+socketio = SocketIO(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///project.db'
 app.config['SECRET_KEY'] = 'vT1$n&8iD4gY7oR2cVbN9LmK3jX6zQ5wM0hA8sE4fB7pZ2xW6uJ1'
 db.init_app(app)
-socketio = SocketIO(app)
-
-
 # Import the association table
 users_rooms = db.Table('users_rooms',
     db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
@@ -33,9 +27,6 @@ class Room(db.Model):
     creator_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     creator = db.relationship('User', backref=db.backref('created_rooms', lazy=True))
     connected_users = db.relationship('User', secondary=users_rooms, backref=db.backref('rooms', lazy=True))
-
-    def get_connected_users(self):
-        return [user.username for user in self.connected_users]
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -53,10 +44,11 @@ class User(db.Model):
     def __repr__(self):
         return '<User %r>' % self.username
 
-migrate = Migrate(app, db)
-
 with app.app_context():
     db.create_all()
+
+# ... [Rest of the code remains unchanged]
+
 
 #
 #
@@ -167,9 +159,9 @@ def generate_random_code(length=6):
     return code
 
 
-@app.route("/room/<int:id>")
-def room_detail(id):
-    room = Room.query.get(id)
+@app.route("/room/<code>")
+def room_detail(code):
+    room = Room.query.get(code)
     if not room:
         flash('Room not found.')
         return redirect(url_for("home"))
@@ -226,8 +218,9 @@ def room_create():
 
         flash('Room created successfully!')
         return redirect(url_for("room_detail", id=new_room.id))
+    user = User.query.get(session['user_id'])
 
-    return render_template("room/create.html")
+    return render_template("room/create.html", username=user.username)
 
 @app.route("/join", methods=["POST"])
 def join_room_route():
@@ -296,5 +289,5 @@ def leave_room():
 
 
 if __name__ == '__main__':
-    eventlet.wsgi.server(eventlet.listen(('127.0.0.1', 5000)), app)
+    eventlet.wsgi.server(eventlet.listen(('192.168.86.228', 5000)), app)
     socketio.run(app)

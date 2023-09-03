@@ -1,63 +1,86 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <!-- ... -->
-    </head>
-    <body>
-        <!-- ... -->
-        <h2>{{ room.name }}</h2>
-        <p>Room Code: {{ room.code }}</p>
-        <h3>Connected Users:</h3>
+  <head>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/index.css') }}"
+    />
+  </head>
+  <body>
+    <div class="container">
+        <div class="nav">
+          <input type="checkbox" id="nav-check" />
+          <div class="nav-header">
+            <div class="nav-title">{{ username }}</div>
+          </div>
+          <div class="nav-btn">
+            <label for="nav-check">
+              <span></span>
+              <span></span>
+              <span></span>
+            </label>
+          </div>
+          <div class="nav-links">
+            <a href="{{ url_for('room_create') }}">New Game</a>
+            <a href="{{ url_for('logout') }}">Logout</a>
+          </div>
+          
+        </div>
+        <div class="Rooms-list">
+          <h1>{{ room.name }}</h1>
+          <h2>Room Code: {{ room.code }}</h2>
+        </div>
+      </div>
 
-<ul id="userList"></ul>
+<li id="userList"></li>
 
 
 <form action="/leave" method="post">
-    <input type="hidden" name="room_id" value="{{ room.id }}">
-    <input type="submit" value="Leave Room">
+<input type="hidden" name="room_id" value="{{ room.id }}">
+<input type="submit" value="Leave Room">
 </form>
 
-<script src="https://cdn.socket.io/4.4.1/socket.io.js"></script>
-<script>
-    var socket = io()
-    // Event handler for successful connection
-    socket.on('connect', function() {
-        console.log('Connected to server.');
-    });
+    <script src="https://cdn.socket.io/4.4.1/socket.io.js"></script>
+    <script>
+      var socket = io();
+      // Event handler for successful connection
+      socket.on("connect", function () {
+        console.log("Connected to server.");
+      });
 
-        // Join a room
-        console.log('Joining room:', '{{ room.id }}');  // Add this line for debugging
-        socket.emit('join_room', {
-            room_id: '{{ room.id }}'  // Room ID is obtained from the server-side Flask variable
-        });
-        
-    // Event handler for disconnection
-    socket.on('disconnect', function() {
-        console.log('Disconnected from server.');
-    });
+      // Join a room
+      console.log("Joining room:", "{{ room.id }}"); // Add this line for debugging
+      socket.emit("join_room", {
+        room_id: "{{ room.id }}", // Room ID is obtained from the server-side Flask variable
+      });
 
-    // Event handler for updates to the list of connected users
-    socket.on('connected_users_update', function(data) {
-        console.log('Received connected_users_update event:', data);  // Added for debugging
-    
-        console.log('Updated list of connected users:', data.users);
-    
+      // Event handler for disconnection
+      socket.on("disconnect", function () {
+        console.log("Disconnected from server.");
+      });
+
+      // Event handler for updates to the list of connected users
+      socket.on("connected_users_update", function (data) {
+        console.log("Received connected_users_update event:", data); // Added for debugging
+
+        console.log("Updated list of connected users:", data.users);
+
         // Update the user list in the HTML
-        var userList = document.getElementById('userList');
-        userList.innerHTML = '';
+        var userList = document.getElementById("userList");
+        userList.innerHTML = "";
         for (var i = 0; i < data.users.length; i++) {
-            console.log('Adding user to list:', data.users[i]);  // Added for debugging
-            var li = document.createElement('li');
-            li.textContent = data.users[i];
-            userList.appendChild(li);
+          console.log("Adding user to list:", data.users[i]); // Added for debugging
+          var li = document.createElement("li");
+          li.classList.add("user-box"); // Add a class to the <li> for styling
+          li.textContent = data.users[i];
+          userList.appendChild(li);
         }
-    });
+      });
 
-    // Event handler for errors
-    socket.on('error', function(data) {
-        console.log('Error:', data.message);
-    });
-</script>
-
-</body>
+      // Event handler for errors
+      socket.on("error", function (data) {
+        console.log("Error:", data.message);
+      });
+    </script>
+  </body>
 </html>
