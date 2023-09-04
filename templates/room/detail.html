@@ -8,38 +8,33 @@
   </head>
   <body>
     <div class="container">
-        <div class="nav">
-          <input type="checkbox" id="nav-check" />
-          <div class="nav-header">
-            <div class="nav-title">{{ username }}</div>
-          </div>
-          <div class="nav-btn">
-            <label for="nav-check">
-              <span></span>
-              <span></span>
-              <span></span>
-            </label>
-          </div>
-          <div class="nav-links">
-            <a href="{{ url_for('room_create') }}">New Game</a>
-            <a href="{{ url_for('logout') }}">Logout</a>
-          </div>
-          
+      <div class="nav">
+        <input type="checkbox" id="nav-check" />
+        <div class="nav-header">
+          <div class="nav-title">{{ username }}</div>
         </div>
-        <div class="Rooms-list">
-          <h1>{{ room.name }}</h1>
-          <h2>Room Code: {{ room.code }}</h2>
+        <div class="nav-btn">
+          <label for="nav-check">
+            <span></span>
+            <span></span>
+            <span></span>
+          </label>
+        </div>
+        <div class="nav-links">
+          <a href="{{ url_for('leave_room', room_id=room.id) }}">Leave Game</a>
+          <a href="{{ url_for('room_create') }}">New Game</a>
+          <a href="{{ url_for('logout') }}">Logout</a>
         </div>
       </div>
-
-<li id="userList"></li>
-
-
-<form action="/leave" method="post">
-<input type="hidden" name="room_id" value="{{ room.id }}">
-<input type="submit" value="Leave Room">
-</form>
-
+      <div class="code-bar">
+        <h2>Room Code: {{ room.code }}</h2>
+        <div id="qrcode"></div>
+      </div>
+      <div class="Rooms-list">
+        <h2>Players in game:</h2>
+        <ul id="userList"></ul>
+      </div>
+    </div>
     <script src="https://cdn.socket.io/4.4.1/socket.io.js"></script>
     <script>
       var socket = io();
@@ -80,6 +75,21 @@
       // Event handler for errors
       socket.on("error", function (data) {
         console.log("Error:", data.message);
+      });
+    </script>
+    <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
+    <script>
+      // Get a reference to the target div
+      var qrcodeContainer = document.getElementById("qrcode");
+
+      // URL for the QR code
+      var url = window.location.href;
+
+      // Create a QRCode instance
+      var qrcode = new QRCode(qrcodeContainer, {
+        text: url,
+        width: 128, // Adjust the width as needed
+        height: 128, // Adjust the height as needed
       });
     </script>
   </body>

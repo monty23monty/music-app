@@ -43,18 +43,32 @@
       </div>
       <div class="rooms-list">
         <div class="create-room-form-box">
-          <form method="POST" action="{{ url_for('room_create') }}">
-            <h1>Create a Room</h1>
+          <form method="GET" onsubmit="return updateFormAction();" action="#">
+            <h1>Join a Room</h1>
             <div class="inputbox">
-              <input type="text" id="name" name="name" required />
-              <label for="name">Room Name:</label>
+                <input type="text" id="code" name="code" required />
+                <label for="code">Room Code:</label>
             </div>
-            <button type="submit" class="form-submit">Create Room</button>
-          </form>
+            <button type="submit" class="form-submit">Join Room</button>
+        </form>
+        
         </div>
       </div>
     </div>
 
     <script src="script.js"></script>
+    <script>
+      function updateFormAction() {
+          // Get the value from the code input field
+          var codeValue = document.getElementById("code").value;
+      
+          // Update the form action with the new URL
+          var form = document.querySelector("form");
+          form.action = "{{ url_for('room_detail', code='_CODE_') }}".replace('_CODE_', codeValue);
+      
+          return true; // This will allow the form to be submitted
+      }
+      </script>
+      
   </body>
 </html>

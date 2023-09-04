@@ -16,32 +16,38 @@ section {
     background-size: cover;
 }
 .Rooms-list h2 {
-    font-size: 1.8em;
-    color: #000;
+    font-size: 2.2em;
+    color: #0A5368;
     text-align: center;
-    margin-top: 10px;
+    margin-bottom: 40px;
 }
 #userList {
     display: flex;
     flex-wrap: wrap;
     gap: 16px; /* spacing between boxes */
     justify-content: center; /* center the boxes */
+    padding: 0 20px; /* Add some padding to the sides for spacing */
 }
 
 #userList li {
     list-style-type: none; /* remove bullet points */
-    background-color: #007BFF; /* example color */
-    color: #fff; /* text color */
+    background-color: #4f4f4f; /* example color */
+    color: #ffffff; /* text color */
+    font-size: 1.5em;
     padding: 20px; /* spacing inside the box */
     border-radius: 8px; /* rounded corners */
-    width: 150px; /* fixed width */
-    height: 100px; /* fixed height */
     display: flex;
     align-items: center;
     justify-content: center;
     text-align: center;
     font-weight: bold;
+    
+    /* Set a minimum width for the user list boxes */
+    min-width: 150px; /* Adjust the value according to your design */
+    height: 70px; /* Adjust the value according to your design */
 }
+
+
 .form-box {
     position: relative;
     width: 450px;
@@ -63,9 +69,10 @@ section {
     width: 100%;
     height: 100px;
     align-items: center;
+    background-color: #04D589;
 }
 .Rooms-list {
-    background-color: #f0f0f0;
+    background-color: #04D589;
     display: flex;
     flex-direction: column; /* Stack elements vertically */
     align-items: center; /* Center horizontally */
@@ -93,6 +100,29 @@ section {
     justify-content: center;
     align-items: center;
 }
+#qrcode {
+  border: 5px solid #023B4F;
+  border-radius: 10px;
+  position: relative;
+  left: 10%;
+  top: 19%;
+}
+
+.code-bar {
+    height: 100px;
+    width: 100%;
+    padding: 0 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #04D589;
+    position: relative;
+    border: none;
+}
+.code-bar h2 {
+    color: #0A5368;
+    font-size: 3em;
+}
 
 .nav {
     height: 50px;
@@ -101,10 +131,10 @@ section {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background-color: #4d4d4d;
+    background-color: #023B4F;
     position: relative;
     border: none;
-    border-radius: 10px 10px 0 0;
+    border-radius: 10px 10px 10px 10px;
 }
 
 .nav .nav-header {
