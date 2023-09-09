@@ -1,12 +1,13 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
-import hashlib
 from hashlib import sha256
+import hashlib
 from flask_sqlalchemy import SQLAlchemy
 import random
 import string
-from flask_socketio import SocketIO, emit
-from flask_socketio import join_room
-
+from flask_socketio import SocketIO, emit, join_room
+from difflib import SequenceMatcher
+import sqlite3 as sql
+from random import randint
 import eventlet
 
 
@@ -23,6 +24,14 @@ users_rooms = db.Table('users_rooms',
     db.Column('user_id', db.Integer, db.ForeignKey('user.id')),
     db.Column('room_id', db.Integer, db.ForeignKey('room.id'))
 )
+
+
+class Songs(db.Model):
+    id = db.Column(db.integer, primary_key=True)
+    name = db.Column(db.String(80))
+    month = db.Column(db.String(5))
+    position = db.Column(db.Integer)
+    artist = db.Column(db.String(80))
 
 
 class Room(db.Model):
@@ -57,6 +66,42 @@ class User(db.Model):
     def __repr__(self):
         return "<User %r>" % self.username
 
+class Game:
+    def __init__(self, *players):
+        # Starts a game when a Game object is created
+
+        # Generates 15 randoms songs
+        self.songs = set()
+        for i in range(15):
+            self.songs.add(get_random_song())
+
+        # Stores a list of players in a dictionary containing the player name and a list of songs to be completed
+        self.players = dict()
+        for i in players:
+            self.players[i] = self.songs.copy()
+            self.giveSong(i)
+   
+    def giveSong(self, player):
+        if len(self.players[player]):
+            # Removes a random song from a players remaining set of songs
+            song = self.players[player].pop()
+            self.players[player]
+            emit('givesong', {'song': song})
+
+        else:
+            pass # to do: Tell the player they won, tell other players they lost.
+
+    def CheckAnswer(self, player, answer, songname):
+        # Player gives us their username, answer, and name of song they were trying to guess
+        if SequenceMatcher(None, answer, songname).ratio() >= 0.8:
+            # to do: Tell player they were correct
+            self.giveSong(player)
+
+def get_random_song(lowerDate, upperDate, minimumPosition):
+    songs = Songs.query.filter(Songs.Month.between(lowerDate, upperDate), Songs.Position >= minimumPosition).all()
+    if songs:
+        return songs[randint(0, len(songs) - 1)]
+    return None
 
 with app.app_context():
     db.create_all()
@@ -177,7 +222,7 @@ def logout():
 
 
 def generate_random_code(length=6):
-    characters = string.ascii_uppercase + string.ascii_lowercase + string.digits
+    characters = string.digits
     code = "".join(random.choice(characters) for _ in range(length))
     return code
 
@@ -195,9 +240,25 @@ def room_detail(code):
 
     return render_template("room/detail.html", room=room, username=user.username)
 
+@app.route("/room/<code>/play")
+def StartGame(code):
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+    room = Room.query.filter_by(code=code).first()
+    user_id = session["user_id"]
+    if user_id != room.creator_id:
+        flash("You are not the host")
+        return redirect(url_for(f"room/{code}"))
+    game = Game(*room.connected_users)
+    
+
+
+
 @app.route("/room")
 def room():
     return render_template("room/join.html")
+
+
 
 
 @socketio.on("join_room")
@@ -222,11 +283,10 @@ def handle_join_room(data):
         join_room(room_id)
         socketio.emit(
             "connected_users_update", {"users": connected_users}, room=room_id
+
         )
 
 
-def ack():
-    print("message was received!")
 
 
 @app.route("/rooms/create", methods=["GET", "POST"])

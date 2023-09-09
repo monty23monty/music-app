@@ -1,2 +1,2 @@
 -- SQLite
-SELECt * FROM User
+select * from Room

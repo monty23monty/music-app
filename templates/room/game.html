@@ -1,0 +1,111 @@
+<html>
+  <head>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+
+  <body>
+    <div class="container">
+      <div class="nav">
+        <input type="checkbox" id="nav-check" />
+        <div class="nav-header">
+          <div class="nav-title">{{ username }}</div>
+        </div>
+        <div class="nav-btn">
+          <label for="nav-check">
+            <span></span>
+            <span></span>
+            <span></span>
+          </label>
+        </div>
+        <div class="nav-links">
+          <a href="{{ url_for('leave_room', room_id=room.id) }}">Leave Game</a>
+          <a href="/rooms/create">New Game</a>
+          <a href="/logout">Logout</a>
+        </div>
+      </div>
+      <div class="code-bar">
+        <h2>Complete the song:</h2>
+      </div>
+      <div class="Rooms-list">
+        <h2>{{ song }}</h2>
+        <div class="inputbox-game">
+          <input id="inp" />
+          <label for="inp">Answer</label>
+        </div>
+        <button class="button-game" id="buttons">Submit</button>
+      </div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.4.1/socket.io.js"></script>
+    <script>
+      var socket = io();
+      // Event handler for successful connection
+      socket.on("connect", function () {
+        console.log("Connected to server.");
+      });
+
+      // Join a room
+      console.log("Joining room:", "1"); // Add this line for debugging
+      socket.emit("join_room", {
+        room_id: "1", // Room ID is obtained from the server-side Flask variable
+      });
+
+      // Event handler for disconnection
+      socket.on("disconnect", function () {
+        console.log("Disconnected from server.");
+      });
+
+      // Event handler for updates to the list of connected users
+      socket.on("connected_users_update", function (data) {
+        console.log("Received connected_users_update event:", data); // Added for debugging
+
+        console.log("Updated list of connected users:", data.users);
+
+        // Update the user list in the HTML
+        var userList = document.getElementById("userList");
+        userList.innerHTML = "";
+        for (var i = 0; i < data.users.length; i++) {
+          console.log("Adding user to list:", data.users[i]); // Added for debugging
+          var li = document.createElement("li");
+          li.classList.add("user-box"); // Add a class to the <li> for styling
+          li.textContent = data.users[i];
+          userList.appendChild(li);
+        }
+      });
+      document
+        .getElementById("buttons")
+        .addEventListener("click", function () {
+          // Step 3: Extract text from input box and store in a variable
+          var extractedText = document.getElementById("inp").value;
+
+          // Just to confirm, log the extracted text
+          console.log(extractedText);
+          socket.emit("answer_submit", {})
+          
+        });
+
+      // Event handler for errors
+      socket.on("error", function (data) {
+        console.log("Error:", data.message);
+      });
+    </script>
+    <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
+    <script>
+      // Get a reference to the target div
+      var qrcodeContainer = document.getElementById("qrcode");
+
+      // URL for the QR code
+      var url = window.location.href;
+
+      // Create a QRCode instance
+      var qrcode = new QRCode(qrcodeContainer, {
+        text: url,
+        width: 128, // Adjust the width as needed
+        height: 128, // Adjust the height as needed
+      });
+    </script>
+    <script>
+      
+    </script>
+  </body>
+</html>
