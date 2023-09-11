@@ -21,7 +21,9 @@
           </label>
         </div>
         <div class="nav-links">
-          <a href="{{ url_for('leave_room', room_id=room.id) }}">Leave Game</a>
+          <a href="{{ url_for('leave_room', room_code=room.code) }}"
+            >Leave Game</a
+          >
           <a href="{{ url_for('room_create') }}">New Game</a>
           <a href="{{ url_for('logout') }}">Logout</a>
         </div>
@@ -29,24 +31,47 @@
       <div class="code-bar">
         <h2>Room Code: {{ room.code }}</h2>
         <div id="qrcode"></div>
+        <button id="startGameBtn">Start Game</button>
       </div>
       <div class="Rooms-list">
         <h2>Players in game:</h2>
+        {% with messages = get_flashed_messages() %} {% if messages %} {% for
+        message in messages %}
+        <p>{{ message }}</p>
+        {% endfor %} {% endif %} {% endwith %}
+
         <ul id="userList"></ul>
       </div>
     </div>
     <script src="https://cdn.socket.io/4.4.1/socket.io.js"></script>
     <script>
       var socket = io();
+      var userId = "{{ user_id }}";
+      var hostId = "{{ room.creator_id }}";
       // Event handler for successful connection
       socket.on("connect", function () {
         console.log("Connected to server.");
       });
+      const startGameBtn = document.getElementById("startGameBtn");
+
+      startGameBtn.addEventListener("click", function () {
+        // Emit the 'start_game' event to the server
+        console.log("Emmiting start game event");
+        socket.emit("start_game", { room_code: "{{  room.code  }}" }); // Replace 'your_room_code' with the actual room code
+      });
 
       // Join a room
-      console.log("Joining room:", "{{ room.id }}"); // Add this line for debugging
+      console.log("Joining room:", "{{ room.code }}"); // Add this line for debugging
       socket.emit("join_room", {
+        room_code: "{{ room.code }}",
         room_id: "{{ room.id }}", // Room ID is obtained from the server-side Flask variable
+      });
+      socket.on("game_starting", function () {
+        if (userId !== hostId) {
+          console.log("Game Starting")
+          // Assuming you have a way to identify the host on the client side
+          window.location.href = url_for_join_room; // Redirect to the join room page
+        }
       });
 
       // Event handler for disconnection
@@ -70,6 +95,13 @@
           li.textContent = data.users[i];
           userList.appendChild(li);
         }
+      });
+      socket.on("redirect_to_game", function (data) {
+        console.log("Recived redirect event");
+        window.location.href = data.url;
+      });
+      socket.on("test_message", function (data) {
+        console.log(data.message);
       });
 
       // Event handler for errors

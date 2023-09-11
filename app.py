@@ -9,6 +9,8 @@ from difflib import SequenceMatcher
 import sqlite3 as sql
 from random import randint
 import eventlet
+import time
+import pandas as pd
 
 
 db = SQLAlchemy()
@@ -27,11 +29,27 @@ users_rooms = db.Table('users_rooms',
 
 
 class Songs(db.Model):
-    id = db.Column(db.integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(80))
     month = db.Column(db.String(5))
     position = db.Column(db.Integer)
     artist = db.Column(db.String(80))
+
+    def __init__(self, name, month, position, artist):
+        self.name = name
+        self.month = month
+        self.position = position
+        self.artist = artist
+
+    
+    @classmethod
+    def get_random_song(cls, lowerDate, upperDate, minimumPosition):
+        songs = cls.query.filter(cls.month.between(lowerDate, upperDate), cls.position >= minimumPosition).all()
+        if songs:
+            return songs[randint(0, len(songs) - 1)]
+        return None
+
+
 
 
 class Room(db.Model):
@@ -73,7 +91,7 @@ class Game:
         # Generates 15 randoms songs
         self.songs = set()
         for i in range(15):
-            self.songs.add(get_random_song())
+            self.songs.add(Songs.get_random_song('Jan 2000', 'Mar 2023', '40'))
 
         # Stores a list of players in a dictionary containing the player name and a list of songs to be completed
         self.players = dict()
@@ -83,10 +101,13 @@ class Game:
    
     def giveSong(self, player):
         if len(self.players[player]):
+            user_id = session["user_id"]
+
             # Removes a random song from a players remaining set of songs
             song = self.players[player].pop()
             self.players[player]
-            emit('givesong', {'song': song})
+
+            socketio.emit('givesong', {'song': song}, room=user_id)
 
         else:
             pass # to do: Tell the player they won, tell other players they lost.
@@ -97,23 +118,10 @@ class Game:
             # to do: Tell player they were correct
             self.giveSong(player)
 
-def get_random_song(lowerDate, upperDate, minimumPosition):
-    songs = Songs.query.filter(Songs.Month.between(lowerDate, upperDate), Songs.Position >= minimumPosition).all()
-    if songs:
-        return songs[randint(0, len(songs) - 1)]
-    return None
-
 with app.app_context():
     db.create_all()
 
-# ... [Rest of the code remains unchanged]
 
-
-#
-#
-#
-
-# Auth Code
 
 
 @app.route("/")
@@ -248,8 +256,11 @@ def StartGame(code):
     user_id = session["user_id"]
     if user_id != room.creator_id:
         flash("You are not the host")
-        return redirect(url_for(f"room/{code}"))
-    game = Game(*room.connected_users)
+        return redirect(url_for('room_detail', code=code))
+    else:
+        socketio.emit('game_starting', room=code)
+        game = Game(*room.connected_users)
+        return render_template("/room/game.html", room_code=code, user_id=user_id, room=room)
     
 
 
@@ -259,15 +270,31 @@ def room():
     return render_template("room/join.html")
 
 
+@socketio.on('start_game')
+def start_game(data):
+    print("received start game event")
+    room_code = data['room_code']
+    emit('test_message', {'message': 'Are you there?'}, room=room_code)
+    print(room_code)
+    
+    # Redirect only the user who sent the request
+    emit('redirect_to_game', {'url': f'/room/{room_code}/play'}, room=request.sid)
+    
+    # After a short delay, send the first question
+    time.sleep(2)  # Ensure you've imported the time module at the top of your file
+    question = "What's 2 + 2?"  # Placeholder
+    emit('send_question', {'question': question}, room=room_code)
+
 
 
 @socketio.on("join_room")
 def handle_join_room(data):
     print("Received join_room event with data:", data)
-    room_id = data["room_id"]
+    room_code = data["room_code"]
     user_id = session["user_id"]
+    room_id = data['room_id']
 
-    print(f"Received join_room event. room_id: {room_id}, user_id: {user_id}")
+    print(f"Received join_room event. room_code: {room_code}, user_id: {user_id}")
 
     room = Room.query.get(room_id)
     user = User.query.get(user_id)
@@ -280,9 +307,9 @@ def handle_join_room(data):
         # Instead of room.get_connected_users(), use room.connected_users directly
         connected_users = [u.username for u in room.connected_users]
         print(f"Emitting connected_users_update event. users: {connected_users}")
-        join_room(room_id)
+        join_room(room_code)
         socketio.emit(
-            "connected_users_update", {"users": connected_users}, room=room_id
+            "connected_users_update", {"users": connected_users}, room=room_code
 
         )
 
@@ -320,18 +347,18 @@ def room_create():
 
 @app.route("/join", methods=["POST"])
 def join_room_route():
-    # Get room_id from the form data
-    room_id = request.form.get("room_id")
+    # Get room_code from the form data
+    room_code = request.form.get("room_code")
 
     # Get user_id from the session
     user_id = session.get("user_id")
 
-    if not room_id or not user_id:
+    if not room_code or not user_id:
         flash("An error occurred. Please try again.")
         return redirect(url_for("home"))
 
     # Get the room and the user from the database
-    room = Room.query.get(room_id)
+    room = Room.query.get(room_code)
     user = User.query.get(user_id)
 
     if not room or not user:
@@ -347,25 +374,25 @@ def join_room_route():
         socketio.emit(
             "connected_users_update",
             {"users": room.get_connected_users()},
-            room=room_id,
+            room=room_code,
         )
 
     # Redirect the user to the room detail view
-    return redirect(url_for("room_detail", id=room_id))
+    return redirect(url_for("room_detail", id=room_code))
 
 
-@app.route("/leave/<int:room_id>", methods=["GET"])
-def leave_room(room_id):
+@app.route("/leave/<int:room_code>", methods=["GET"])
+def leave_room(room_code):
 
     # Get user_id from the session
     user_id = session.get("user_id")
 
-    if not room_id or not user_id:
+    if not room_code or not user_id:
         flash("An error occurred. Please try again.")
         return redirect(url_for("home"))
 
     # Get the room and the user from the database
-    room = Room.query.get(room_id)
+    room = Room.query.get(room_code)
     user = User.query.get(user_id)
     print(room)
     print(user)
@@ -381,11 +408,11 @@ def leave_room(room_id):
         print("Removing User")
 
         # Emit a connected_users_update event to update the user list in real time
-        print("Emitting event for room:", room_id)
+        print("Emitting event for room:", room_code)
         socketio.emit(
             "connected_users_update",
             {"users": room.get_connected_users()},
-            room=room_id,
+            room=room_code,
         )
 
     # Redirect the user to the home view
